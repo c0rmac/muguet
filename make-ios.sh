@@ -63,7 +63,7 @@ else
   unset MUGUET_GAME_CODE || true
 fi
 
-IPHONEOS_DEPLOYMENT_TARGET=15.0 cargo "+$TOOLCHAIN" build --release --no-default-features --target aarch64-apple-ios --target-dir target/ios
+CARGO_PROFILE_RELEASE_LTO=false IPHONEOS_DEPLOYMENT_TARGET=15.0 cargo "+$TOOLCHAIN" build --release --no-default-features --target aarch64-apple-ios --target-dir target/ios
 
 (cd ios && xcodegen generate --quiet)
 rm -rf target/ios-xcode/Build/Products

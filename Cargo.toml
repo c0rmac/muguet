@@ -11,6 +11,7 @@ license = "GPL-3.0-or-later"
 wasmtime = { version = "49", default-features = false, features = ["runtime", "threads", "profiling", "anyhow"] }
 anyhow = "1"
 libc = "0.2"
+rustc-hash = "2"
 serde_json = "1.0.151"
 wgpu = "30.0.1"
 pollster = "1.0.1"
@@ -32,7 +33,8 @@ default = ["jit"]
 jit = ["wasmtime/cranelift", "wasmtime/parallel-compilation", "dep:wasmparser", "dep:wasm-encoder"]
 
 [profile.release]
-opt-level = 2
+opt-level = 3
+lto = "thin"
 
 [patch.crates-io]
 wgpu-core = { path = "vendor/wgpu-core" }
