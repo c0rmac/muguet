@@ -17,6 +17,8 @@ mod mouse;
 mod mp;
 mod pad;
 #[cfg(feature = "jit")]
+mod mem32;
+#[cfg(feature = "jit")]
 mod patch;
 mod proto;
 mod server;
@@ -139,6 +141,12 @@ fn main() -> Result<()> {
     if argv.get(1).map(String::as_str) == Some("--patch") {
         let (wasm, out) = (argv.get(2).context("--patch <wasm> <out>")?, argv.get(3).context("--patch <wasm> <out>")?);
         std::fs::write(out, patch::patch(&std::fs::read(wasm)?, mp::COMMANDS)?)?;
+        return Ok(());
+    }
+    #[cfg(feature = "jit")]
+    if argv.get(1).map(String::as_str) == Some("--mem32") {
+        let (wasm, out) = (argv.get(2).context("--mem32 <wasm> <out>")?, argv.get(3).context("--mem32 <wasm> <out>")?);
+        std::fs::write(out, mem32::convert(&std::fs::read(wasm)?)?)?;
         return Ok(());
     }
     #[cfg(feature = "jit")]
@@ -331,7 +339,7 @@ fn load_module(engine: &Engine, startup: &config::Startup) -> Result<Module> {
 fn compile_patched(engine: &Engine, wasm_path: &std::path::Path) -> Result<Module> {
     let wasm = std::fs::read(wasm_path).with_context(|| format!("{}", wasm_path.display()))?;
     let t = Instant::now();
-    let patched = patch::patch(&wasm, mp::COMMANDS)?;
+    let patched = if patch::is_patched(&wasm) { wasm } else { patch::patch(&wasm, mp::COMMANDS)? };
     eprintln!("[host] multiplayer hooks added in {:?}", t.elapsed());
     Module::new(engine, &patched).map_err(anyhow::Error::from).context("compile module")
 }
@@ -396,6 +404,8 @@ fn engine_config_for(ios: bool) -> Config {
         config.memory_guard_size(2 << 30);
     }
     config.memory_may_move(false);
+    // fill the function table at instantiation so call_indirect skips its lazy-init check
+    config.table_lazy_init(false);
     #[cfg(all(not(feature = "jit"), target_os = "ios", game_code))]
     config.with_custom_code_memory(Some(Arc::new(SignedCode)));
 
