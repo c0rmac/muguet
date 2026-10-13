@@ -253,7 +253,7 @@ fn resize_heap(mem: &SharedMemory, requested: u64) -> bool {
     let max = heap_max(mem);
     let old = mem.data_size() as u64;
     if requested <= old { return false; }
-    if requested > max { return false; }
+    if requested > max { grow_failed(mem, requested); return false; }
     let mut cut = 1u64;
     while cut <= 4 {
         let over = (old as f64 * (1.0 + 0.2 / cut as f64)) as u64;
@@ -266,7 +266,18 @@ fn resize_heap(mem: &SharedMemory, requested: u64) -> bool {
         }
         cut *= 2;
     }
+    grow_failed(mem, requested);
     false
+}
+
+// the game gets a null allocation from here on; it may keep asking, so log the 1st, 2nd, 4th, 8th... failure
+fn grow_failed(mem: &SharedMemory, requested: u64) {
+    static FAILS: AtomicU64 = AtomicU64::new(0);
+    let n = FAILS.fetch_add(1, Ordering::Relaxed) + 1;
+    if !n.is_power_of_two() { return; }
+    let ty = mem.ty();
+    let limit = ty.maximum().map(|p| p << ty.page_size_log2()).unwrap_or(u64::MAX).min(heap_max(mem));
+    eprintln!("[host] heap can't grow from {} MB to {} MB (limit {} MB, {n} failures so far)", mem.data_size() >> 20, requested >> 20, limit >> 20);
 }
 
 fn em_asm(mem: &SharedMemory, code: u64, sig: u64, buf: u64) -> i64 {

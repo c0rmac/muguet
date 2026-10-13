@@ -48,6 +48,8 @@ TEAM=<your team id> ./make-ios.sh game.zip --install
 ```
 `--ipa` makes `build/Muguet.ipa` instead. With a free account, add `FREE=1` (+ a `BUNDLE_ID` of your own)
 
+`MEM32=1` builds the game with a 32-bit memory: faster, but the game's heap then stops just short of 4 GB, which long sessions can need more than
+
 Please install this app with AltStore. This probably won't work well with Sideloadly (or even SideStore, as per [this issue])(https://github.com/SideStore/SideStore/issues/1616)
 
 The app also works with a paid developer account.

@@ -1,9 +1,9 @@
 // muguet - mem32.rs
-// rewrites game.wasm from a 64-bit to a 32-bit linear memory (ios only).
+// rewrites game.wasm from a 64-bit to a 32-bit linear memory (ios, opt-in: MEM32=1 ./make-ios.sh).
 // a memory64 needs an explicit bounds check on every access; a 32-bit memory with a 4 GiB
-// reservation lets wasmtime drop them and rely on guard pages instead. the game's heap is 3 GiB,
-// so every address fits in 32 bits: addresses are computed as i64 like before and wrapped to
-// i32 right before each memory instruction.
+// reservation lets wasmtime drop them and rely on guard pages instead. the heap can't grow past
+// 4 GiB then (host.rs), so every address fits in 32 bits: addresses are computed as i64 like
+// before and wrapped to i32 right before each memory instruction.
 
 use anyhow::{bail, Result};
 use wasm_encoder::reencode::{utils, Error, Reencode};
